@@ -1,0 +1,34 @@
+#!/usr/bin/php
+<?php
+/**
+ * Опишем алгоритм работы. Продумаю интерфейсы. Реализую интерфейсы.
+ * chmod +x ./crawler
+ */
+
+
+if (php_sapi_name() !== 'cli') {
+	exit;
+}
+set_time_limit(0);
+
+
+
+abstract class ContentParserInterface
+{
+	function __construct(string $content)
+	{
+	}
+	function report()
+	{
+	}
+}
+
+abstract class ReportFileBuilderInterface
+{
+	function __construct(array $table, string $output_file)
+	{
+	}
+	function save()
+	{
+	}
+}
