@@ -1,4 +1,5 @@
 <?php
+
 /**
  * 1. По ссылке скачать html контент
  * 2. Найти ссылки страницы
@@ -11,10 +12,10 @@
  */
 
 // ------------------- ERRORS AND SETTINGS -------------------
-$ERRORS=[
-    0 => 'ERROR: Need to be in CLI mode only.'.PHP_EOL,
-    1 => 'ERROR: First argument need to be a valid link to web page.'.PHP_EOL,
-];    
+$ERRORS = [
+    0 => 'ERROR: Need to be in CLI mode only.' . PHP_EOL,
+    1 => 'ERROR: First argument need to be a valid link to web page.' . PHP_EOL,
+];
 // Проверка на то что мы в режиме CLI а не запрос от вебсервера
 $cli = (php_sapi_name() === 'cli') ? true : exit($ERRORS[0]);
 // Проверка на то что передали 1 аргументом валидную ссылку
@@ -22,7 +23,8 @@ $uri = (!empty($argv[1]) && filter_var($argv[1], FILTER_VALIDATE_URL)) ? $argv[1
 
 // Отключения времени
 set_time_limit(0);
-// Игнорируем ошибки уровня PHP Warning. DOMDocument и simplexml_import_dom не понимает html5 и svg теги (header...)
+// Игнорируем ошибки уровня PHP Warning.
+// DOMDocument и simplexml_import_dom не понимает html5 и svg теги (header...)
 error_reporting(~E_WARNING);
 
 // ------------------- EXECUTION -------------------
@@ -35,8 +37,8 @@ $crawler->saveReport();
 /**
  * Class Crawler
  * 
- * @author Constantin017 <konstantin4all@gmail.com>
- * 
+ * @author  Constantin017 <konstantin4all@gmail.com>
+ * @license MIT 
  */
 class Crawler
 {
@@ -46,14 +48,14 @@ class Crawler
      * @var array $data
      */
     protected $data;
-    
+
     /**
      * Строка хранящяя в себе название файла
      * 
      * @var string $file_name
      */
     protected $file_name;
-    
+
     /**
      * Строка хранящяя в себе стартовую ссылку по которой происходит анализ страниц
      * 
@@ -69,7 +71,7 @@ class Crawler
     public function __construct()
     {
         $this->data = [];
-        $this->file_name = 'report_'.date('d.m.Y', time()).'.html';
+        $this->file_name = 'report_' . date('d.m.Y', time()) . '.html';
     }
 
     /**
@@ -114,9 +116,7 @@ class Crawler
     /**
      * Получаем наименование файла отчета
      * 
-     * @param staring $file_name 
-     * 
-     * @return self
+     * @return string
      */
     public function getFileName()
     {
@@ -126,7 +126,7 @@ class Crawler
     /**
      * Устанавливаем наименование файла отчета
      * 
-     * @param staring $file_name 
+     * @param string $file_name 
      * 
      * @return self
      */
@@ -135,7 +135,7 @@ class Crawler
         if (!empty($file_name)) {
             $this->file_name = $file_name;
         }
-        
+
         return $this;
     }
 
@@ -146,7 +146,7 @@ class Crawler
      */
     public function getFullPath()
     {
-        return __DIR__.'/'.$this->file_name;
+        return __DIR__ . '/' . $this->file_name;
     }
 
     /**
@@ -158,26 +158,25 @@ class Crawler
     {
         $f = fopen($this->getFullPath(), 'wb');
 
-        fwrite($f, '<table>'.PHP_EOL);
+        fwrite($f, '<table>' . PHP_EOL);
 
         $this->_prepareDataForExportReport();
 
         if (!empty($this->data)) {
             foreach ($this->data as $row) {
-                fwrite($f, '<tr>'.PHP_EOL);
+                fwrite($f, '<tr>' . PHP_EOL);
                 foreach ($row as $key => $value) {
                     if ($key == 'links') {
                         continue;
                     }
-                    fwrite($f, '<td>'.$value.'</td>');
+                    fwrite($f, '<td>' . $value . '</td>');
                 }
-                fwrite($f, PHP_EOL.'</tr>'.PHP_EOL);
+                fwrite($f, PHP_EOL . '</tr>' . PHP_EOL);
             }
         }
         fwrite($f, '</table>');
-        
-        fclose($f);
 
+        fclose($f);
     }
 
     /**
@@ -187,43 +186,46 @@ class Crawler
      * 
      * @return array
      */
-    private function _grab(string $uri) {
+    private function _grab(string $uri)
+    {
         $report = [
             'uri'   => $uri,
             'links' => [],
-            'images'=> 0,
+            'images' => 0,
             'time'  => 0
         ];
         $time_start = time();
-    
+
         // Примитивно, без передачи заголовков. Игнорируем ошибку результата запроса.
         $content = $this->_getRequest($uri);
 
         if ($content === '') {
             return $report;
-        } 
-        
+        }
+
         $parsed = $this->_domParse($content);
-    
+
         $report['links']    = $parsed['links'];
         $report['images']   = $parsed['images'];
 
         // Вычитаем из текущего времени время которое сохранили ранее, получаем время работы функции
         $report['time']     = time() - $time_start;
-        
+
         return $report;
     }
 
     /**
      * Получаем контент страницы по ссылке
      * 
+     * @param string $uri 
+     * 
      * @return string
      */
     private function _getRequest(string $uri)
     {
-        return (filter_var($uri, FILTER_VALIDATE_URL) !== false) ? file_get_contents($uri) : ''; 
+        return (filter_var($uri, FILTER_VALIDATE_URL) !== false) ? file_get_contents($uri) : '';
     }
-    
+
     /**
      * Получаем массив из количества картинок и ссылок на странице
      * 
@@ -234,15 +236,15 @@ class Crawler
     private function _domParse(string $html)
     {
         $_return = [
-            'images'=> 0,
+            'images' => 0,
             'links' => []
         ];
 
         $doc = new DOMDocument();
         $doc->loadHTML($html);
-        
+
         $xml = simplexml_import_dom($doc);
-        
+
         if ($xml === false) {
             return $_return;
         }
@@ -258,16 +260,16 @@ class Crawler
             foreach ($links as $link) {
                 $_uri = strval($link['href']);
                 if ($_uri !== '' && filter_var($_uri, FILTER_VALIDATE_URL) !== false) {
-                    $_return['links'][] = $_uri;    
+                    $_return['links'][] = $_uri;
                 }
             }
         }
-        
+
         $_return['links'] = array_unique($_return['links']);
         $_return['images'] = $images;
 
         unset($doc, $xml, $images, $links);
-        
+
         return $_return;
     }
 
@@ -302,7 +304,7 @@ class Crawler
             return $return_uri;
         }
 
-        if (rtrim($this->cannonical_uri,'/') === rtrim($uri,'/')) {
+        if (rtrim($this->cannonical_uri, '/') === rtrim($uri, '/')) {
             return $return_uri;
         }
 
@@ -312,15 +314,17 @@ class Crawler
         $return_uri .= isset($parse_home['pass']) ? ':' . $parse_home['pass']  : '';
         $return_uri .= (isset($parse_home['user']) || isset($parse_home['pass'])) ? "@" : '';
 
-        $return_uri .= isset($parse_uri['path']) ? '/'.$parse_uri['path'] : '';
+        $return_uri .= isset($parse_uri['path']) ? '/' . $parse_uri['path'] : '';
         $return_uri .= isset($parse_uri['query']) ? '?' . $parse_uri['query'] : '';
         $return_uri .= isset($parse_uri['fragment']) ? '#' . $parse_uri['fragment'] : '';
 
-        return $parse_home['scheme'].'://'.str_replace('//', '/', $return_uri);
+        return $parse_home['scheme'] . '://' . str_replace('//', '/', $return_uri);
     }
 
     /**
      * Устанавливаем канноническую ссылку, ее будем сравнивать с ссылками на странице
+     * 
+     * @param string $uri 
      * 
      * @return self 
      */
